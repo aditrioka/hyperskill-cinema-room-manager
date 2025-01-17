@@ -1,56 +1,128 @@
 package cinema
 
-const val TITLE = "Cinema:"
-const val NUM_OF_ROW = 7
-const val NUM_OF_COL = 8
-const val SEAT = "S"
-const val TOP_HEADER = "  1 2 3 4 5 6 7 8"
-
-const val SMALL_CAPACITY = 60
-const val REGULAR_PRICE = 10
-const val BACK_PRICE = 8
-const val ROW_PROMPT = "Enter the number of rows:"
-const val COL_PROMPT = "Enter the number of seats in each row:"
-const val INCOME_PROMPT = "Total income:"
-
 fun main() {
-    calculateIncome()
+    val cinema = Cinema()
+    cinema.promptRowAndCol()
+    cinema.displayStatus()
+    cinema.getSeatPrice()
+    cinema.displayStatus()
 }
 
-fun calculateIncome() {
-    println(ROW_PROMPT)
-    val numOfRow = readln().toInt()
+class Cinema {
 
-    println(COL_PROMPT)
-    val numOfCol = readln().toInt()
+    private var numOfCol = 0
+    private var numOfRow = 0
 
-    val totalSeats = numOfRow * numOfCol
+    private val totalSeats
+        get() = numOfRow * numOfCol
 
-    val totalIncome = if (totalSeats <= SMALL_CAPACITY) {
-        totalSeats * REGULAR_PRICE
-    } else {
-        val frontRow = numOfRow / 2
-        val backRow = if (numOfRow % 2 == 1) (numOfRow / 2) + 1 else numOfRow / 2
+    private val numOfFrontRow
+        get() = numOfRow / 2
 
-        val frontSeatPrices = frontRow * numOfCol * REGULAR_PRICE
-        val backSeatPricess = backRow * numOfCol * BACK_PRICE
+    private val numOfBackRow
+        get() = if (numOfRow % 2 == 1) (numOfRow / 2) + 1 else numOfRow / 2
 
-        frontSeatPrices + backSeatPricess
+    private val isSmallCapacity
+        get() = totalSeats <= SMALL_CAPACITY
+
+    private val seats = mutableListOf<MutableList<Seat>>()
+
+    fun promptRowAndCol() {
+        println(INIT_ROW_PROMPT)
+        numOfRow = readln().toInt()
+
+        println(INIT_COL_PROMPT)
+        numOfCol = readln().toInt()
+
+        initSeatsState()
     }
 
-    println(INCOME_PROMPT)
-    println("$$totalIncome")
-}
+    private fun initSeatsState() {
+        for (row in 0..<numOfRow) {
+            seats.add(mutableListOf())
+            for (col in 0..<numOfCol) {
+                val seatPrice = initSeatPrice(row)
+                seats[row].add(Seat(Status.SEAT.text, seatPrice))
+            }
+        }
+    }
 
-fun displayStatus() {
-    println(TITLE)
-    println(TOP_HEADER)
-    for (row in 0..<NUM_OF_ROW) {
-        print("${row.inc()} ")
-        for (col in 0..<NUM_OF_COL) {
-            print(SEAT)
-            if (col < NUM_OF_COL.dec()) print(" ")
+    private fun initSeatPrice(row: Int): Int {
+        return if (isSmallCapacity) {
+            REGULAR_PRICE
+        } else {
+            if (row.inc() > numOfFrontRow) BACK_PRICE else REGULAR_PRICE
+        }
+    }
+
+    fun calculateIncome() {
+        val totalIncome = if (isSmallCapacity) {
+            totalSeats * REGULAR_PRICE
+        } else {
+            val frontSeatPrices = numOfFrontRow * numOfCol * REGULAR_PRICE
+            val backSeatPrices = numOfBackRow * numOfCol * BACK_PRICE
+
+            frontSeatPrices + backSeatPrices
+        }
+
+        println(INCOME_PROMPT)
+        println("$$totalIncome")
+    }
+
+    fun getSeatPrice() {
+        println(GET_PRICE_ROW_PROMPT)
+        val row = readln().toInt().dec()
+        println(GET_PRICE_COL_PROMPT)
+        val col = readln().toInt().dec()
+
+        val seat = seats[row][col]
+        val seatPrice = seat.price
+        seats[row][col] = seat.copy(status = Status.BOOKED.text)
+
+        println("$GET_SEAT_PRICE_PROMPT $$seatPrice")
+    }
+
+    fun displayStatus() {
+        println(TITLE)
+        printHeader()
+
+        for (row in 0..<numOfRow) {
+            print("${row.inc()} ")
+            for (col in 0..<numOfCol) {
+                print(seats[row][col].status)
+                if (col < numOfCol.dec()) print(" ")
+            }
+            println()
         }
         println()
+    }
+
+    private fun printHeader() {
+        print("  ")
+        repeat(numOfCol) { col ->
+            print(col.inc())
+            if (col <= numOfCol) print(" ")
+        }
+        println()
+    }
+
+    companion object {
+        const val TITLE = "Cinema: "
+        const val SMALL_CAPACITY = 60
+        const val REGULAR_PRICE = 10
+        const val BACK_PRICE = 8
+        const val INIT_ROW_PROMPT = "Enter the number of rows:"
+        const val INIT_COL_PROMPT = "Enter the number of seats in each row:"
+        const val GET_PRICE_ROW_PROMPT = "Enter a row number:"
+        const val GET_PRICE_COL_PROMPT = "Enter a seat number in that row:"
+        const val GET_SEAT_PRICE_PROMPT = "Ticket price: "
+        const val INCOME_PROMPT = "Total income:"
+    }
+
+    data class Seat(var status: String, val price: Int)
+
+    enum class Status(val text: String) {
+        SEAT("S"),
+        BOOKED("B")
     }
 }
