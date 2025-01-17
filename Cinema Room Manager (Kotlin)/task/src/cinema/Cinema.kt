@@ -2,10 +2,7 @@ package cinema
 
 fun main() {
     val cinema = Cinema()
-    cinema.promptRowAndCol()
-    cinema.displayStatus()
-    cinema.getSeatPrice()
-    cinema.displayStatus()
+    cinema.operate()
 }
 
 class Cinema {
@@ -27,7 +24,23 @@ class Cinema {
 
     private val seats = mutableListOf<MutableList<Seat>>()
 
-    fun promptRowAndCol() {
+    fun operate() {
+        promptRowAndCol()
+
+        do {
+            promptOperation()
+            val operation = readln().toInt()
+
+            when(operation) {
+                Operation.SHOW_STATE.number -> showState()
+                Operation.BUY_TICKET.number -> buyTicket()
+                Operation.EXIT.number -> continue
+            }
+        } while(operation != Operation.EXIT.number)
+
+    }
+
+    private fun promptRowAndCol() {
         println(INIT_ROW_PROMPT)
         numOfRow = readln().toInt()
 
@@ -35,6 +48,15 @@ class Cinema {
         numOfCol = readln().toInt()
 
         initSeatsState()
+    }
+
+    private fun promptOperation() {
+        val promptOperation = """
+            1. Show the seats
+            2. Buy a ticket
+            0. Exit
+        """.trimIndent()
+        println(promptOperation)
     }
 
     private fun initSeatsState() {
@@ -69,7 +91,7 @@ class Cinema {
         println("$$totalIncome")
     }
 
-    fun getSeatPrice() {
+    fun buyTicket() {
         println(GET_PRICE_ROW_PROMPT)
         val row = readln().toInt().dec()
         println(GET_PRICE_COL_PROMPT)
@@ -82,7 +104,7 @@ class Cinema {
         println("$GET_SEAT_PRICE_PROMPT $$seatPrice")
     }
 
-    fun displayStatus() {
+    fun showState() {
         println(TITLE)
         printHeader()
 
@@ -124,5 +146,11 @@ class Cinema {
     enum class Status(val text: String) {
         SEAT("S"),
         BOOKED("B")
+    }
+
+    enum class Operation(val number: Int) {
+        SHOW_STATE(1),
+        BUY_TICKET(2),
+        EXIT(0)
     }
 }
